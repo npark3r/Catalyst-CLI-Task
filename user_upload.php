@@ -237,6 +237,14 @@ if (array_key_exists("file", $options) == TRUE || array_key_exists("f", $options
         $user["name"] = convertNameCasing($user["name"]);
         $user["surname"] = convertNameCasing($user["surname"]);
 
+        // Check that name and surname have length greater than zero.
+        if (strlen($user["name"]) < 1 || strlen($user["surname"]) < 1) {
+            fwrite(STDOUT,
+                $user["name"] . " is invalid. Length must be greater than zero. " .
+                "Record will be discarded." . PHP_EOL);
+            continue;
+        }
+
         $user["email"] = strtolower($user["email"]);
         // Validate emails.
         if (!filter_var($user["email"], FILTER_VALIDATE_EMAIL)) {
