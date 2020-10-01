@@ -23,6 +23,11 @@
 
 // calling --help will output the CLI help instructions
 
+// ASSUMPTIONS:
+
+// 1. Apostrophes and exclamation marks are allowed in email addresses.
+// 2. "Rebuilding" table meant dropping the table and recreating it.
+
 /**
  * Process a name string, making all letters but the first lowercase and setting first
  * to uppercase.
@@ -86,8 +91,8 @@ $argumentsIncorrect = FALSE;
 // parsing CLI arguments
 $shortopts  = "";
 $shortopts .= "f:";   // Required value for csv file.
-$shortopts .= "c";    // No value.
-$shortopts .= "d";    // No value.
+$shortopts .= "c";    // No value required for create_table.
+$shortopts .= "d";    // No value required for dry_run.
 $shortopts .= "u:";   // Required value for MySQL user.
 $shortopts .= "p:";   // Required value for MySQL password.
 $shortopts .= "h:";   // Required value for MySQL hostname.
@@ -101,8 +106,6 @@ $longopts  = array(
 
 // Get options.
 $options = getopt($shortopts, $longopts);
-
-//var_dump($options);
 
 // If help option was specified -> print help text and die.
 if (array_key_exists("help", $options) == TRUE) {
@@ -220,13 +223,12 @@ if (array_key_exists("file", $options) == TRUE || array_key_exists("f", $options
         $users = readFromCSV($filename);
     }
     // Process and validate each record from the CSV and push to array of valid records.
-    foreach($users as $user) {
+    foreach ($users as $user) {
 
-        if (preg_match('/[^A-Za-z]/', $user["name"]))
-        {
+        if (preg_match('/[^A-Za-z]/', $user["name"])) {
             fwrite(STDOUT,
                 $user["name"] . " is invalid. Contains character others than English letters. " .
-                "Record will be discarded.". PHP_EOL);
+                "Record will be discarded." . PHP_EOL);
             continue;
         }
         // Correct casing for name and surname.
@@ -238,22 +240,96 @@ if (array_key_exists("file", $options) == TRUE || array_key_exists("f", $options
         if (!filter_var($user["email"], FILTER_VALIDATE_EMAIL)) {
             fwrite(STDOUT,
                 $user["email"] . " is invalid. Incorrect format. " .
-                "Record will be discarded.". PHP_EOL);
+                "Record will be discarded." . PHP_EOL);
             continue;
         }
         // If the loop has reached this point the record is valid -> append to valid array.
         array_push($validUsers, $user);
     }
-    // Printing out each of the valid records for now.
-    foreach($validUsers as $user) {
-        fwrite(STDOUT, "Name: " . $user["name"] . " - Surname: " . $user["surname"] . " - Email: " .
-            $user["email"] . PHP_EOL);
+    // Check if dry_run was provided.
+    if (array_key_exists("dry_run", $options) == TRUE || array_key_exists("d", $options) == TRUE) {
+        // Print statement about dry_run being flagged.
+        fwrite(STDOUT, "Dry run was flagged. No change to DB. Valid records listed below:" . PHP_EOL);
+        // Printing out each of the valid records.
+        foreach ($validUsers as $user) {
+            fwrite(STDOUT, "Name: " . $user["name"] . " - Surname: " . $user["surname"] . " - Email: " .
+                $user["email"] . PHP_EOL);
+        }
+        exit;
+    } else if (count($validUsers) > 0) {
+        if (array_key_exists("u", $options) == TRUE &&
+            array_key_exists("p", $options) == TRUE &&
+            array_key_exists("h", $options) == TRUE) {
+
+            $hostname = strval($options["h"]);
+            $username = strval($options["u"]);
+            $password = strval($options["p"]);
+
+            // Create DB connection.
+            try {
+                // Try to connect while suppressing warning.
+                $conn = @mysqli_connect($hostname, $username, $password);
+                // Check that the connection was successful.
+                if (!$conn) {
+                    echo "Error: Unable to connect to MySQL." . PHP_EOL;
+                    echo "Debugging errno: " . mysqli_connect_errno() . PHP_EOL;
+                    echo "Debugging error: " . mysqli_connect_error() . PHP_EOL;
+                    die;
+                }
+
+                // Create the database if it does not exist.
+                $sql = "CREATE DATABASE IF NOT EXISTS fakeuserdb";
+                if ($conn->query($sql) === TRUE) {
+                    echo "Database created successfully or already existed" . PHP_EOL;
+                } else {
+                    echo "Error creating database: " . $conn->error . PHP_EOL;
+                    // Close connection.
+                    mysqli_close($conn);
+                    die;
+                }
+                // Change to correct DB.
+                mysqli_select_db($conn, "fakeuserdb");
+
+                // Check table "users" exists, if not let user know to use create_table.
+                // Check if table users exists.
+                $result = $conn->query("SHOW TABLES LIKE 'users'");
+
+                if($result->num_rows > 0) {
+
+                    foreach($validUsers as $user) {
+                            // Insert records. This query will insert if email is unique.
+                            $sql = "INSERT INTO users (email, name, surname)
+                                    SELECT * FROM (SELECT '" .
+                                        addslashes($user["email"]) . "', '" .
+                                        addslashes($user["name"]) . "', '" .
+                                        addslashes($user["surname"]) . "') AS tmp
+                                    WHERE NOT EXISTS (
+                                        SELECT name FROM users WHERE email = '" . addslashes($user["email"]) . "'
+                                    ) LIMIT 1";
+                            if ($conn->query($sql) === FALSE) {
+                                echo "Error: " . $sql . PHP_EOL . $conn->error . PHP_EOL;
+                            }
+                    }
+                } else {
+                    fwrite(STDOUT, "--file/-f was called without dry_run; however, no 'users' table" .
+                        " exists. Use --create_table with script to create the table". PHP_EOL);
+                    die;
+                }
+                // Close DB connection.
+                mysqli_close($conn);
+
+            } catch (Exception $e) {
+                echo "Message: " . $e->getMessage();
+                die;
+            }
+        } else {
+            fwrite(STDOUT, "--file/-f was called but DB credentials were not supplied. Use --dry_run ".
+                "to run the script without DB interaction." . PHP_EOL);
+            die;
+        }
+    } else {
+        fwrite(STDOUT, "No valid records to add to database." . PHP_EOL);
+        exit;
     }
+    exit;
 }
-
-
-
-
-
-
-
