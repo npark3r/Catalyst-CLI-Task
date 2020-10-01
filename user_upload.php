@@ -3,7 +3,7 @@
 // file as input and processes it. The parsed file is inserted in a MySQL
 // database specified by additional arguments.
 // An example command line instruction run script is:
-//      php user_upload.php --file=user.csv --dry_run
+//      php user_upload.php --file user.csv --dry_run
 
 // The above example will run the script without accessing the DB
 
@@ -11,13 +11,13 @@
 
 //      php user_upload.php --create_table
 
-// The above example will cause the MySQL users table to be built (with no other action taken) or dropped and rebuilt
+// The above example will cause the MySQL users table to be created (with no other action taken) or dropped and rebuilt
 // if the users table exists.
 
 // Another example command line instruction run script is:
 
-//      php user_upload.php --file=user.csv -u=MySQL_username -p=MySQL_password
-//                          -h=MySQL_host
+//      php user_upload.php --file user.csv -u MySQL_username -p MySQL_password
+//                          -h MySQL_host
 
 // The above example will cause the MySQL users table to be built (with no other action taken)
 
@@ -25,14 +25,15 @@
 
 // ASSUMPTIONS:
 
-// 1. Apostrophes and exclamation marks are allowed in email addresses.
+// 1. Apostrophes and exclamation marks are allowed in email addresses + other special characters.
 // 2. "Rebuilding" table meant dropping the table and recreating it.
 
 /**
  * Process a name string, making all letters but the first lowercase and setting first
- * to uppercase.
+ * to uppercase. Returns the processed string.
  *
  * @param string $name
+ * @return string
  */
 function convertNameCasing($name): string {
     $processedName = strtolower($name) ;
@@ -44,6 +45,7 @@ function convertNameCasing($name): string {
  * Process contents of a CSV file into an array and return it.
  *
  * @param string $file
+ * @return array|null
  */
 function readFromCSV($file): ?array {
     // Open CSV file.
