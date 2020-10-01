@@ -5,27 +5,51 @@
 // Run the following with a terminal in the script directory:
 //      php foobar.php
 
-foreach (range(1, 100) as $number) {
-    if ($number % 3 == 0 && $number % 5 == 0) {
-        if($number == 100) {
+// Script is over-engineered to account for future changes to foo and bar values.
+
+// Definitions for values are adjustable.
+define("FOO", 3);
+define("BAR", 5);
+define("RANGE", 100);
+define("START", 1);
+
+/**
+ * Check if an integer is cleanly divisible by another integer.
+ *
+ * @param int $value
+ * @param int $divisor
+ * @return bool
+ */
+function divisibleBy($value, $divisor) : bool {
+    if ($value % $divisor == 0) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+// Iterate over range to print output.
+foreach (range(START, RANGE) as $number) {
+    if (divisibleBy($number, FOO) && divisibleBy($number,BAR)) {
+        if($number == RANGE) {
             echo "foobar";
         } else {
             echo "foobar, ";
         }
-    } else if ($number % 3 == 0 ) {
-        if($number == 100) {
+    } else if (divisibleBy($number, FOO)) {
+        if($number == RANGE) {
             echo "foo";
         } else {
             echo "foo, ";
         }
-    } else if ($number % 5 == 0 ) {
-        if($number == 100) {
+    } else if (divisibleBy($number, BAR)) {
+        if($number == RANGE) {
             echo "bar\n";
         } else {
             echo "bar, ";
         }
     } else {
-        if($number == 100) {
+        if($number == RANGE) {
             echo $number . "\n";
         } else {
             echo $number . ", ";
