@@ -119,6 +119,7 @@ Options:
 -d, --dry_run         Run the script with all functionality aside from DB actions
 -u                    MySQL username
 -p                    MySQL password
+-h                    MySQL host
 -he,--help            Print this help text
 Example:
 
