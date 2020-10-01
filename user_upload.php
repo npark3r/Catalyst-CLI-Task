@@ -21,6 +21,45 @@
 
 // calling --help will output the CLI help instructions
 
+/**
+ * Process contents of a CSV file
+ *
+ * @param string $file
+ */
+function readFromCSV($file): ?array {
+    // Open CSV file.
+    try {
+        // Check if file name exists in directory.
+        if ( !file_exists($file) ) {
+            throw new Exception("File not found.\n");
+        }
+        // Attempt to open the file.
+        $fp = fopen($file, 'r');
+        if (! $fp) {
+            throw new Exception("File open failed.\n");
+        }
+
+        // Read csv headers from first row.
+        $key = fgetcsv($fp,"1024",",");
+
+        // Parse CSV rows into array.
+        $user_array = array();
+        while ($row = fgetcsv($fp,"1024",",")) {
+            $user_array[] = array_combine($key, $row);
+        }
+        // Close file.
+        fclose($fp);
+
+        return $user_array;
+
+    } catch (Exception $e) {
+        echo 'Message: ' .$e->getMessage();
+    }
+    return null;
+}
+
+$users = [];
+
 // parsing CLI arguments
 $shortopts  = "";
 $shortopts .= "f:";   // Required value for csv file.
@@ -57,7 +96,17 @@ Example:
     die;
 }
 
-var_dump($options);
+//var_dump($options);
+
+if (array_key_exists("file", $options) == true) {
+    $filename = $options["file"];
+    $users = readFromCSV($filename);
+    print_r($users);
+} else if (array_key_exists("f", $options) == true) {
+    $filename = $options["f"];
+    $users = readFromCSV($filename);
+    print_r($users);
+}
 
 
 
