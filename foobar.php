@@ -5,3 +5,31 @@
 // Run the following with a terminal in the script directory:
 //      php foobar.php
 
+foreach (range(1, 100) as $number) {
+    if ($number % 3 == 0 && $number % 5 == 0) {
+        if($number == 100) {
+            echo "foobar";
+        } else {
+            echo "foobar, ";
+        }
+    } else if ($number % 3 == 0 ) {
+        if($number == 100) {
+            echo "foo";
+        } else {
+            echo "foo, ";
+        }
+    } else if ($number % 5 == 0 ) {
+        if($number == 100) {
+            echo "bar\n";
+        } else {
+            echo "bar, ";
+        }
+    } else {
+        if($number == 100) {
+            echo $number . "\n";
+        } else {
+            echo $number . ", ";
+        }
+    }
+}
+
