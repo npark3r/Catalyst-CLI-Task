@@ -6,11 +6,13 @@
 //      php user_upload.php --file=user.csv --dry_run
 
 // The above example will run the script without accessing the DB
+
 // Another example command line instruction run script is:
 
 //      php user_upload.php --create_table
 
-// The above example will cause the MySQL users table to be built (with no other action taken)
+// The above example will cause the MySQL users table to be built (with no other action taken) or dropped and rebuilt
+// if the users table exists.
 
 // Another example command line instruction run script is:
 
@@ -20,6 +22,18 @@
 // The above example will cause the MySQL users table to be built (with no other action taken)
 
 // calling --help will output the CLI help instructions
+
+/**
+ * Process a name string, making all letters but the first lowercase and setting first
+ * to uppercase.
+ *
+ * @param string $name
+ */
+function convertNameCasing($name): string {
+    $processedName = strtolower($name) ;
+    $processedName = ucfirst($processedName);
+    return $processedName;
+}
 
 /**
  * Process contents of a CSV file into an array and return it.
@@ -41,11 +55,16 @@ function readFromCSV($file): ?array {
 
         // Read csv headers from first row.
         $key = fgetcsv($fp,"1024",",");
+        // Remove white space (spaces and tabs) from keys.
+        for ($i = 0; $i < count($key); $i++) {
+            $key[$i] = preg_replace('/\s+/', '', $key[$i]);
+        }
 
         // Parse CSV rows into array.
         $user_array = array();
         while ($row = fgetcsv($fp,"1024",",")) {
-            $user_array[] = array_combine($key, $row);
+            // Add each key while removing white space.
+            $user_array[] = array_combine($key, preg_replace('/\s+/', '', $row));
         }
         // Close file.
         fclose($fp);
@@ -57,8 +76,10 @@ function readFromCSV($file): ?array {
         die;
     }
 }
-
+// Array for initital csv entries.
 $users = [];
+// List of valid records to process.
+$validUsers = [];
 // Flag to check if arguments parsed are valid.
 $argumentsIncorrect = FALSE;
 
@@ -185,14 +206,48 @@ if (array_key_exists("create_table", $options) == TRUE || array_key_exists("c", 
     die;
 }
 
+// This conditional will run if the --file or -f arguments were provided. This code block has altered functionality
+// if the dry-run argument was specified. dry_run will cause the script to run as per usual, without affecting the
+// database.
 if (array_key_exists("file", $options) == TRUE || array_key_exists("f", $options) == TRUE) {
     if (array_key_exists("file", $options) == TRUE) {
         $filename = $options["file"];
+        // Insert CSV rows into users array.
         $users = readFromCSV($filename);
-
     } else if (array_key_exists("f", $options) == TRUE) {
         $filename = $options["f"];
+        // Insert CSV rows into users array.
         $users = readFromCSV($filename);
+    }
+    // Process and validate each record from the CSV and push to array of valid records.
+    foreach($users as $user) {
+
+        if (preg_match('/[^A-Za-z]/', $user["name"]))
+        {
+            fwrite(STDOUT,
+                $user["name"] . " is invalid. Contains character others than English letters. " .
+                "Record will be discarded.". PHP_EOL);
+            continue;
+        }
+        // Correct casing for name and surname.
+        $user["name"] = convertNameCasing($user["name"]);
+        $user["surname"] = convertNameCasing($user["surname"]);
+
+        $user["email"] = strtolower($user["email"]);
+        // Validate emails.
+        if (!filter_var($user["email"], FILTER_VALIDATE_EMAIL)) {
+            fwrite(STDOUT,
+                $user["email"] . " is invalid. Incorrect format. " .
+                "Record will be discarded.". PHP_EOL);
+            continue;
+        }
+        // If the loop has reached this point the record is valid -> append to valid array.
+        array_push($validUsers, $user);
+    }
+    // Printing out each of the valid records for now.
+    foreach($validUsers as $user) {
+        fwrite(STDOUT, "Name: " . $user["name"] . " - Surname: " . $user["surname"] . " - Email: " .
+            $user["email"] . PHP_EOL);
     }
 }
 
