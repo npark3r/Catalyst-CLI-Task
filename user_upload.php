@@ -9,7 +9,8 @@
 
 // Another example command line instruction to run script is:
 
-//      php user_upload.php --create_table
+//      php user_upload.php --create_table -u MySQL_username -p MySQL_password
+//                          -h MySQL_host
 
 // The above example will cause the MySQL users table to be created (with no other action taken) or dropped and rebuilt
 // if the users table exists.
