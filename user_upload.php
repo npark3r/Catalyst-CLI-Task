@@ -110,7 +110,7 @@ $longopts  = array(
 $options = getopt($shortopts, $longopts);
 
 // If help option was specified -> print help text and die.
-if (array_key_exists("help", $options) == TRUE || array_key_exists("he", $options) == TRUE) {
+if (array_key_exists("help", $options) == TRUE) {
     fwrite(STDOUT,
     "This CLI accepts a CSV file as input, processes it and the contained users are added to a MySQL database table.
 Options:
@@ -354,6 +354,6 @@ if (array_key_exists("file", $options) == TRUE || array_key_exists("f", $options
 }
 // If the $options array is empty print output to help user.
 if (count($options) == 0) {
-    fwrite(STDOUT, "No valid arguments supplied. Run with --help to view help text.." . PHP_EOL);
+    fwrite(STDOUT, "No valid arguments supplied. Run with --help to view help text." . PHP_EOL);
     exit;
 }
