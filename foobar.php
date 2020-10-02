@@ -32,25 +32,25 @@ function divisibleBy($value, $divisor) : bool {
 foreach (range(START, RANGE) as $number) {
     if (divisibleBy($number, FOO) && divisibleBy($number,BAR)) {
         if($number == RANGE) {
-            echo "foobar";
+            echo "foobar" . PHP_EOL;
         } else {
             echo "foobar, ";
         }
     } else if (divisibleBy($number, FOO)) {
         if($number == RANGE) {
-            echo "foo";
+            echo "foo" . PHP_EOL;
         } else {
             echo "foo, ";
         }
     } else if (divisibleBy($number, BAR)) {
         if($number == RANGE) {
-            echo "bar\n";
+            echo "bar" . PHP_EOL;
         } else {
             echo "bar, ";
         }
     } else {
         if($number == RANGE) {
-            echo $number . "\n";
+            echo $number  . PHP_EOL;
         } else {
             echo $number . ", ";
         }
