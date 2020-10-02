@@ -7,14 +7,14 @@
 
 // The above example will run the script without accessing the DB
 
-// Another example command line instruction run script is:
+// Another example command line instruction to run script is:
 
 //      php user_upload.php --create_table
 
 // The above example will cause the MySQL users table to be created (with no other action taken) or dropped and rebuilt
 // if the users table exists.
 
-// Another example command line instruction run script is:
+// Another example command line instruction to run script is:
 
 //      php user_upload.php --file user.csv -u MySQL_username -p MySQL_password
 //                          -h MySQL_host
@@ -110,7 +110,7 @@ $longopts  = array(
 $options = getopt($shortopts, $longopts);
 
 // If help option was specified -> print help text and die.
-if (array_key_exists("help", $options) == TRUE) {
+if (array_key_exists("help", $options) == TRUE || array_key_exists("he", $options) == TRUE) {
     fwrite(STDOUT,
     "This CLI accepts a CSV file as input, processes it and the contained users are added to a MySQL database table.
 Options:
@@ -120,7 +120,7 @@ Options:
 -u                    MySQL username
 -p                    MySQL password
 -h                    MySQL host
--he,--help            Print this help text
+--help                Print this help text
 Example:
 
 \$ php user_upload --file 'users.csv'\
@@ -227,10 +227,17 @@ if (array_key_exists("file", $options) == TRUE || array_key_exists("f", $options
     }
     // Process and validate each record from the CSV and push to array of valid records.
     foreach ($users as $user) {
-
-        if (preg_match('/[^A-Za-z]/', $user["name"])) {
+        // Check that name contains only English letters and apostrophes.
+        if (preg_match('/[^A-Za-z\']/', $user["name"])) {
             fwrite(STDOUT,
                 $user["name"] . " is invalid. Contains character others than English letters. " .
+                "Record will be discarded." . PHP_EOL);
+            continue;
+        }
+        // Check that surname contains only English letters and apostrophes.
+        if (preg_match('/[^A-Za-z\']/', $user["surname"])) {
+            fwrite(STDOUT,
+                $user["surname"] . " is invalid. Contains character others than English letters. " .
                 "Record will be discarded." . PHP_EOL);
             continue;
         }
@@ -342,5 +349,10 @@ if (array_key_exists("file", $options) == TRUE || array_key_exists("f", $options
         fwrite(STDOUT, "No valid records to add to database." . PHP_EOL);
         exit;
     }
+    exit;
+}
+// If the $options array is empty print output to help user.
+if (count($options) == 0) {
+    fwrite(STDOUT, "No valid arguments supplied. Run with --help to view help text.." . PHP_EOL);
     exit;
 }
