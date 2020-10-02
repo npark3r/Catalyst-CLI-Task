@@ -333,6 +333,7 @@ if (array_key_exists("file", $options) == TRUE || array_key_exists("f", $options
                         " exists. Use --create_table with script to create the table". PHP_EOL);
                     die;
                 }
+                fwrite(STDOUT, "Finished inserting records to DB table" . PHP_EOL);
                 // Close DB connection.
                 mysqli_close($conn);
 
